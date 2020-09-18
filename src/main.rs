@@ -17,6 +17,8 @@ use rand::Rng;
 
 // Globals:
 static BLACK: [f32; 4] = [0.0, 0.0, 0.0, 0.0];
+static COL_BACKGROUND: [f32; 4] = [0.2, 0.2, 0.2, 1.0];
+static COL_NODEVIEW_BACKGROUND: [f32; 4] = [0.16, 0.16, 0.16, 1.0];
 
 struct App {
     gl: GlGraphics, // OpenGL drawing backend.
@@ -38,7 +40,7 @@ impl App {
         let current_score_curve = self.score_curve.clone();
 
         self.gl.draw(args.viewport(), |c, gl| {
-            clear(BLACK, gl); // Clear the screen.
+            clear(COL_BACKGROUND, gl); // Clear the screen.
 
             let transform = c.transform.trans(50.0, 50.0);
 
@@ -49,6 +51,9 @@ impl App {
                     max_layer_size = current_net.nodes[l].len();
                 }
             }
+
+            rectangle(COL_NODEVIEW_BACKGROUND, rectangle::square(0.0, 0.0, 400.0), transform.
+                      trans(0.0, 0.0),gl);
             
             // Draw Graph
             for l in 0..current_net.nodes.len() {
@@ -64,18 +69,22 @@ impl App {
                                 50.0+n as f64/(max_layer_size as f64) * 400.0 + 5.0,
                                 50.0+((1+l) as f64/(current_net.nodes.len() as f64)) * 400.0 + 5.0,
                                 50.0+nn as f64/(max_layer_size as f64) * 400.0 + 5.0
-                            ], c.transform, gl);
+                            ], c.transform.trans(15.0, 15.0), gl);
                         }
                     }
                     
                     // Draw nodes
                     let node_color: [f32; 4] = [current_net.nodes[l][n] as f32,current_net.nodes[l][n] as f32,current_net.nodes[l][n] as f32,1.0];
-                    rectangle(node_color, square, transform.
-                        trans((l as f64/(current_net.nodes.len() as f64)) * 400.0, 
-                             n as f64/(max_layer_size as f64) * 400.0),
-                    gl);
+                    rectangle(node_color, square, transform.trans(15.0, 15.0).
+                              trans((l as f64/(current_net.nodes.len() as f64)) * 400.0, 
+                                    n as f64/(max_layer_size as f64) * 400.0), gl);
                 }
             }
+
+            let score_view_transform = c.transform.trans(50.0, 500.0);
+
+            // Draw the scorecurve view background
+            rectangle(COL_NODEVIEW_BACKGROUND, rectangle::square(0.0, 0.0, 300.0), score_view_transform.trans(0.0,-25.0),gl);
 
             // Draw learning curve
             for i in 0..current_score_curve.len()-1 {
@@ -85,11 +94,18 @@ impl App {
                     -current_score_curve[i] as f64 * 100.0,
                     (i+1) as f64 * 5.0,
                     -current_score_curve[i+1] as f64 * 100.0
-                ], c.transform.trans(50.0, 500.0), gl);
+                ], score_view_transform, gl);
 
                 // Draw points at each generation point
-                rectangle([1.0, 0.0, 0.0, 1.0], rectangle::square(0.0, 0.0, 2.0), c.transform.trans(50.0, 500.0).trans(i as f64 * 5.0, -current_score_curve[i] as f64 * 100.0).trans(-1.0, -1.0), gl);
+                rectangle([1.0, 0.0, 0.0, 1.0], rectangle::square(0.0, 0.0, 2.0), score_view_transform.trans(i as f64 * 5.0, -current_score_curve[i] as f64 * 100.0).trans(-1.0, -1.0), gl);
             }
+
+            line([1.0; 4], 0.4, [
+                0.0,
+                0.0,
+                300.0,
+                0.0
+            ], score_view_transform, gl);
         });
     }
 
@@ -99,13 +115,15 @@ impl App {
     }
 
     fn start(&mut self) {
-        self.trainer.net = network::NeuralNetwork::new(vec![2,10, 10,2]);
-        self.trainer.clear_training_data();
+        self.trainer.net = network::NeuralNetwork::new(vec![2,10,10,2]); // Create a network with a given size for the trainer
+        self.trainer.clear_training_data(); // Clear the trainings data (not needet here)
+        // Add training data
         self.trainer.add_training_data(vec![0.0, 0.0], vec![1.0, 1.0]);
         self.trainer.add_training_data(vec![1.0, 1.0], vec![0.0, 0.0]);
         self.trainer.add_training_data(vec![0.0, 1.0], vec![1.0, 0.0]);
         self.trainer.add_training_data(vec![1.0, 0.0], vec![0.0, 1.0]);
-        self.score_curve = self.trainer.train_genetic_algorithm(20, 100, 1.0, 0.97);        
+        // Run network and save the learning curve in a variable 
+        self.score_curve = self.trainer.train_genetic_algorithm(20, 100, 1.0, 0.97);       
     }
 }
 
@@ -120,7 +138,7 @@ fn initialize_graphics() {
     let opengl = OpenGL::V3_2;
 
     // Create an Glutin window.
-    let mut window: Window = WindowSettings::new("spinning-square", [800, 800])
+    let mut window: Window = WindowSettings::new("Neural Network Viewer", [800, 800])
         .graphics_api(opengl)
         .exit_on_esc(true)
         .build()
@@ -154,7 +172,7 @@ fn initialize_graphics() {
         if let Some(k) = e.button_args() {
             if k.state == ButtonState::Press {
                 match k.button {
-                    Button::Keyboard(Key::D1) => {
+                    Button::Keyboard(Key::Space) => {
                         let mut rng = rand::thread_rng();
                         app.trainer.net.set_inputs(vec![rng.gen_range(-1.0, 1.0), rng.gen_range(-1.0, 1.0)]);
                         app.trainer.net.calculate_network();
