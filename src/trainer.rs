@@ -44,7 +44,9 @@ impl Trainer {
 
     pub fn train_genetic_algorithm (&mut self, generations : usize, population : usize, mutation_start : f64, mutation_change_mult : f64) -> Vec<f64> {
         let mut parent_network = super::network::NeuralNetwork::new(vec![1,1]);
+        parent_network.initialize(self.net.get_structure());
         parent_network.set_weights(self.net.weights.clone());
+        parent_network.set_biases(self.net.biases.clone());
 
         let mut current_net = super::network::NeuralNetwork::new(vec![1,1]);
         let mut current_score = -1000000.0;
@@ -56,8 +58,13 @@ impl Trainer {
         println!("Training Network...");
         for _i in 0..generations {
             for _p in 0..population {
+                current_net.initialize(parent_network.get_structure());
                 current_net.set_weights(parent_network.weights.clone());
-                current_net.mutate(mutation_ammount);
+                current_net.set_biases(parent_network.biases.clone());
+
+                current_net.mutate_weights(mutation_ammount);
+                current_net.mutate_biases(mutation_ammount);
+
                 let score = self.evaluate(&mut current_net);
                 if score > current_score {
                     parent_network.set_weights(current_net.weights.clone());
@@ -67,9 +74,10 @@ impl Trainer {
             mutation_ammount *= mutation_change_mult;
             generation_scores.push(current_score);
         }
-        println!("Done!");
+        println!("Done! Final score: {0}", generation_scores[generation_scores.len()-1]);
 
         self.net.set_weights(current_net.weights.clone());
+        self.net.set_biases(current_net.biases.clone());
 
         return generation_scores;
     }

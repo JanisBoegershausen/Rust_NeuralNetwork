@@ -1,34 +1,37 @@
-pub mod network; // Get simulation.rs file
+pub mod network;
 mod trainer;
+mod examples;
 
 extern crate glutin_window;
 extern crate graphics;
 extern crate opengl_graphics;
 extern crate piston;
 
+// Import graphics apis for piston
 use glutin_window::GlutinWindow as Window;
 use opengl_graphics::{GlGraphics, OpenGL};
 
+// Import piston engine for visuals
 use piston::{ButtonEvent, RenderEvent};
 use piston::event_loop::{EventSettings, Events};
 use piston::input::{RenderArgs, UpdateArgs, UpdateEvent, Button, ButtonState, Key, MouseCursorEvent};
 use piston::window::WindowSettings;
+
 use rand::Rng;
 
 // Globals:
-static BLACK: [f32; 4] = [0.0, 0.0, 0.0, 0.0];
 static COL_BACKGROUND: [f32; 4] = [0.2, 0.2, 0.2, 1.0];
 static COL_NODEVIEW_BACKGROUND: [f32; 4] = [0.16, 0.16, 0.16, 1.0];
 
 struct App {
     gl: GlGraphics, // OpenGL drawing backend.
-    trainer : trainer::Trainer,
-    score_curve : Vec<f64>
+    trainer : trainer::Trainer, // Network Trainer
+    score_curve : Vec<f64> // List of score values, generated when traineing. Used for displaying learning curve
 }
 
 
 impl App {
-
+    /// Rendering loop that updates all visuals
     fn render(&mut self, args: &RenderArgs) {
         use graphics::*;
 
@@ -55,7 +58,7 @@ impl App {
             rectangle(COL_NODEVIEW_BACKGROUND, rectangle::square(0.0, 0.0, 400.0), transform.
                       trans(0.0, 0.0),gl);
             
-            // Draw Graph
+            // Draw Network-Graph
             for l in 0..current_net.nodes.len() {
                 for n in 0..current_net.nodes[l].len() {
                     // Draw weights as lines
@@ -100,6 +103,7 @@ impl App {
                 rectangle([1.0, 0.0, 0.0, 1.0], rectangle::square(0.0, 0.0, 2.0), score_view_transform.trans(i as f64 * 5.0, -current_score_curve[i] as f64 * 100.0).trans(-1.0, -1.0), gl);
             }
 
+            // Draw zero-line. The optimal point of the networks learning curve
             line([1.0; 4], 0.4, [
                 0.0,
                 0.0,
@@ -115,6 +119,12 @@ impl App {
     }
 
     fn start(&mut self) {
+        self.run_example_two();
+    }
+
+    /// Run example 1
+    /// Network learns to invert two inputs
+    fn run_example_one(&mut self) {
         self.trainer.net = network::NeuralNetwork::new(vec![2,10,10,2]); // Create a network with a given size for the trainer
         self.trainer.clear_training_data(); // Clear the trainings data (not needet here)
         // Add training data
@@ -123,7 +133,21 @@ impl App {
         self.trainer.add_training_data(vec![0.0, 1.0], vec![1.0, 0.0]);
         self.trainer.add_training_data(vec![1.0, 0.0], vec![0.0, 1.0]);
         // Run network and save the learning curve in a variable 
-        self.score_curve = self.trainer.train_genetic_algorithm(20, 100, 1.0, 0.97);       
+        self.score_curve = self.trainer.train_genetic_algorithm(200, 100, 1.0, 0.98); 
+    }
+
+    /// Run example 2
+    /// 
+    fn run_example_two(&mut self) {
+        self.trainer.net = network::NeuralNetwork::new(vec![2,10,10,2]); // Create a network with a given size for the trainer
+        self.trainer.clear_training_data(); // Clear the trainings data (not needet here)
+        // Add training data
+        self.trainer.add_training_data(vec![0.0, 0.0], vec![1.0, 1.0]);
+        self.trainer.add_training_data(vec![1.0, 1.0], vec![0.0, 0.0]);
+        self.trainer.add_training_data(vec![0.0, 1.0], vec![1.0, 0.0]);
+        self.trainer.add_training_data(vec![1.0, 0.0], vec![0.0, 1.0]);
+        // Run network and save the learning curve in a variable 
+        self.score_curve = self.trainer.train_genetic_algorithm(200, 100, 1.0, 0.98); 
     }
 }
 
@@ -165,10 +189,6 @@ fn initialize_graphics() {
             app.update(&args);
         }
 
-        if let Some(_pos) = e.mouse_cursor_args() {
-            //println!("{0} - {1}", pos[0] as f64, pos[1] as f64);
-        }
-
         if let Some(k) = e.button_args() {
             if k.state == ButtonState::Press {
                 match k.button {
@@ -179,14 +199,7 @@ fn initialize_graphics() {
                     },
                     _ => (),
                 }
-            } else if k.state == ButtonState::Release {
-                match k.button {
-                    Button::Mouse(piston::MouseButton::Left) => {
-                        // println!("{}", "LEFT");
-                    },
-                        _ => (),
-                }
-            }
+            } 
         }
     }
 }
