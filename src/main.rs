@@ -118,36 +118,9 @@ impl App {
         
     }
 
+    /// Called once before the first update loop
     fn start(&mut self) {
-        self.run_example_two();
-    }
-
-    /// Run example 1
-    /// Network learns to invert two inputs
-    fn run_example_one(&mut self) {
-        self.trainer.net = network::NeuralNetwork::new(vec![2,10,10,2]); // Create a network with a given size for the trainer
-        self.trainer.clear_training_data(); // Clear the trainings data (not needet here)
-        // Add training data
-        self.trainer.add_training_data(vec![0.0, 0.0], vec![1.0, 1.0]);
-        self.trainer.add_training_data(vec![1.0, 1.0], vec![0.0, 0.0]);
-        self.trainer.add_training_data(vec![0.0, 1.0], vec![1.0, 0.0]);
-        self.trainer.add_training_data(vec![1.0, 0.0], vec![0.0, 1.0]);
-        // Run network and save the learning curve in a variable 
-        self.score_curve = self.trainer.train_genetic_algorithm(200, 100, 1.0, 0.98); 
-    }
-
-    /// Run example 2
-    /// 
-    fn run_example_two(&mut self) {
-        self.trainer.net = network::NeuralNetwork::new(vec![2,10,10,2]); // Create a network with a given size for the trainer
-        self.trainer.clear_training_data(); // Clear the trainings data (not needet here)
-        // Add training data
-        self.trainer.add_training_data(vec![0.0, 0.0], vec![1.0, 1.0]);
-        self.trainer.add_training_data(vec![1.0, 1.0], vec![0.0, 0.0]);
-        self.trainer.add_training_data(vec![0.0, 1.0], vec![1.0, 0.0]);
-        self.trainer.add_training_data(vec![1.0, 0.0], vec![0.0, 1.0]);
-        // Run network and save the learning curve in a variable 
-        self.score_curve = self.trainer.train_genetic_algorithm(200, 100, 1.0, 0.98); 
+        self.score_curve = examples::run_example_two(&mut self.trainer);
     }
 }
 

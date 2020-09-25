@@ -13,6 +13,7 @@ impl Trainer {
         return t;
     }
 
+    /// Add training data to the current training set
     pub fn add_training_data(&mut self, input : Vec<f64>, output : Vec<f64>) {
         self.training_set.push( TrainingData {
             input:input,
@@ -20,29 +21,33 @@ impl Trainer {
         } )
     }
     
+    /// Delete all training data from the current set
     pub fn clear_training_data(&mut self) {
         self.training_set = vec![];
     }
 
-    pub fn evaluate(&mut self, network : &mut super::network::NeuralNetwork) -> f64 {
+    /// Evaluate a give network with all datasets in the current training set and return the score
+    pub fn evaluate_with_training_data(trainer : &Trainer, network : &mut super::network::NeuralNetwork) -> f64 {
         let mut score = 0.0;
-
-        for ts in &self.training_set {
+        for ts in &trainer.training_set {
             network.set_inputs(ts.input.clone());
             network.calculate_network();
             let output = network.get_outputs();
-            //println!("Net Out: {}", output.len());
-            //println!("Dat Out: {}", ts.output.len());
             for n in 0..output.len() {
-                //println!("{}", n);
                 score -= (ts.output[n] - output[n]).abs();
             }
         }
 
-        return score;
+        return score.clone();
     }
 
-    pub fn train_genetic_algorithm (&mut self, generations : usize, population : usize, mutation_start : f64, mutation_change_mult : f64) -> Vec<f64> {
+    /// Train the current network using a genetic algorithm. Evaluation using the current data set
+    pub fn train_genetic_algorithm_dataset (&mut self, generations : usize, population : usize, mutation_start : f64, mutation_change_mult : f64) -> Vec<f64> {
+        return self.train_genetic_algorithm_custom(generations, population, mutation_start, mutation_change_mult, &mut Trainer::evaluate_with_training_data);
+    }
+
+    /// Train the current network using a genetic algorithm. Evaluation using the given evaluation function
+    pub fn train_genetic_algorithm_custom (&mut self, generations : usize, population : usize, mutation_start : f64, mutation_change_mult : f64, evaluation_function : &mut dyn FnMut(&Trainer, &mut super::network::NeuralNetwork) -> f64) -> Vec<f64> {
         let mut parent_network = super::network::NeuralNetwork::new(vec![1,1]);
         parent_network.initialize(self.net.get_structure());
         parent_network.set_weights(self.net.weights.clone());
@@ -55,7 +60,7 @@ impl Trainer {
 
         let mut generation_scores = vec![];
 
-        println!("Training Network...");
+        println!("Training Network using custom function...");
         for _i in 0..generations {
             for _p in 0..population {
                 current_net.initialize(parent_network.get_structure());
@@ -65,7 +70,7 @@ impl Trainer {
                 current_net.mutate_weights(mutation_ammount);
                 current_net.mutate_biases(mutation_ammount);
 
-                let score = self.evaluate(&mut current_net);
+                let score = evaluation_function(&self, &mut current_net).clone();
                 if score > current_score {
                     parent_network.set_weights(current_net.weights.clone());
                     current_score = score;
@@ -73,6 +78,10 @@ impl Trainer {
             }
             mutation_ammount *= mutation_change_mult;
             generation_scores.push(current_score);
+
+            if _i % (generations / 10) == 0 {
+                println!("{}%", _i*100/generations);
+            }
         }
         println!("Done! Final score: {0}", generation_scores[generation_scores.len()-1]);
 
@@ -83,6 +92,7 @@ impl Trainer {
     }
 }
 
+/// Data for training a network. Contains the inputs and the expected outputs for this input
 struct TrainingData {
     input: Vec<f64>,
     output: Vec<f64>
