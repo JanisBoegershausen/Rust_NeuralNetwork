@@ -15,14 +15,14 @@ fn run_example_one(trainer : &mut super::trainer::Trainer) -> Vec<f64> {
 }
 
 /// Run example 2
-/// Network learns to _____, using a custom evaluation function that returns a score by which the networks are compared. 
+/// Network learns to replicate the inputs in its outputs, using a custom evaluation function that returns a score by which the networks are compared. 
 pub fn run_example_two(trainer : &mut super::trainer::Trainer) -> Vec<f64> {
-    trainer.net = super::network::NeuralNetwork::new(vec![2, 2,2]); // Create a network with a given size for the trainer
+    trainer.net = super::network::NeuralNetwork::new(vec![2,2]); // Create a network with a given size for the trainer
     // Run network and save the learning curve in a variable 
-    return trainer.train_genetic_algorithm_custom(500, 200, 1.0, 0.98, &mut evaluate_copy_input); 
+    return trainer.train_genetic_algorithm_custom(200, 300, 1.0, 0.98, &mut evaluate_copy_input); 
 }
 
-/// Evaluate the given network based on how simmilar the outputs are to the inputs
+/// Evaluate the given network based on how simmilar the outputs are to the inputs and return the score
 pub fn evaluate_copy_input(trainer : &super::trainer::Trainer, network : &mut super::network::NeuralNetwork) -> f64{
     if network.nodes[0].len() != network.nodes[network.nodes.len()-1].len() {
         println!("{}", "Error: Input layer does not match output layer!");
@@ -49,4 +49,15 @@ pub fn evaluate_copy_input(trainer : &super::trainer::Trainer, network : &mut su
     }
     
     return score;
+}
+
+/// Run example 2
+/// Shows how to train two networks using a GAN (Generative adversarial network)
+pub fn run_example_three(trainer : &mut super::trainer::Trainer) {
+    // Define set of training data for the second network to train on
+    // Call trainer method that repeats this for x iterations: 
+    // Give the second net real data, evaluate the result and modify it using something like back propagation
+    // Run the first network
+    // Pass the result into the second network, evaulate it and modify it using back prop again
+    // Use the outputs of the second network as a score for the first network and modify the first using back prop
 }

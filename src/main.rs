@@ -93,14 +93,16 @@ impl App {
             for i in 0..current_score_curve.len()-1 {
                 // Draw lines between generation scores
                 line([1.0; 4], 0.4, [
-                    i as f64 * 5.0,
+                    (i as f64 * 300.0) / current_score_curve.len() as f64,
                     -current_score_curve[i] as f64 * 100.0,
-                    (i+1) as f64 * 5.0,
+                    ((i+1) as f64 * 300.0) / current_score_curve.len() as f64,
                     -current_score_curve[i+1] as f64 * 100.0
                 ], score_view_transform, gl);
 
                 // Draw points at each generation point
-                rectangle([1.0, 0.0, 0.0, 1.0], rectangle::square(0.0, 0.0, 2.0), score_view_transform.trans(i as f64 * 5.0, -current_score_curve[i] as f64 * 100.0).trans(-1.0, -1.0), gl);
+                rectangle([1.0, 0.0, 0.0, 1.0], rectangle::square(0.0, 0.0, 2.0), 
+                          score_view_transform.trans((i as f64 * 300.0) / current_score_curve.len() as f64, -current_score_curve[i] as f64 * 100.0).
+                          trans(-1.0, -1.0), gl);
             }
 
             // Draw zero-line. The optimal point of the networks learning curve

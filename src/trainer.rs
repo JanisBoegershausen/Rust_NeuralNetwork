@@ -13,7 +13,7 @@ impl Trainer {
         return t;
     }
 
-    /// Add training data to the current training set
+    /// Add training data to the current training set. 
     pub fn add_training_data(&mut self, input : Vec<f64>, output : Vec<f64>) {
         self.training_set.push( TrainingData {
             input:input,
@@ -21,7 +21,7 @@ impl Trainer {
         } )
     }
     
-    /// Delete all training data from the current set
+    /// Delete all training data from the current set.
     pub fn clear_training_data(&mut self) {
         self.training_set = vec![];
     }
@@ -79,7 +79,7 @@ impl Trainer {
             mutation_ammount *= mutation_change_mult;
             generation_scores.push(current_score);
 
-            if _i % (generations / 10) == 0 {
+            if _i % (generations / 10) == 0 && _i > 0 {
                 println!("{}%", _i*100/generations);
             }
         }
@@ -93,7 +93,7 @@ impl Trainer {
 }
 
 /// Data for training a network. Contains the inputs and the expected outputs for this input
-struct TrainingData {
+pub struct TrainingData {
     input: Vec<f64>,
     output: Vec<f64>
 }
