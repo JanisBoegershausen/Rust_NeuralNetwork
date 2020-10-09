@@ -25,6 +25,7 @@ static COL_NODEVIEW_BACKGROUND: [f32; 4] = [0.16, 0.16, 0.16, 1.0];
 
 struct App {
     gl: GlGraphics, // OpenGL drawing backend.
+    network : network::NeuralNetwork, // The current network
     trainer : trainer::Trainer, // Network Trainer
     score_curve : Vec<f64> // List of score values, generated when traineing. Used for displaying learning curve
 }
@@ -39,7 +40,7 @@ impl App {
         let square = rectangle::square(0.0, 0.0, 10.0);
 
         // Create references to access them in the draw call
-        let current_net = &self.trainer.net;
+        let current_net = &self.network;
         let current_score_curve = self.score_curve.clone();
 
         self.gl.draw(args.viewport(), |c, gl| {
@@ -122,7 +123,9 @@ impl App {
 
     /// Called once before the first update loop
     fn start(&mut self) {
-        self.score_curve = examples::run_example_two(&mut self.trainer);
+        let result = examples::run_example_two(&mut self.trainer);
+        self.network = result.network;
+        self.score_curve = result.generation_score_curve;
     }
 }
 
@@ -148,6 +151,7 @@ fn initialize_graphics() {
     // Create a new game and run it.
     let mut app = App {
         gl: GlGraphics::new(opengl),
+        network : network::NeuralNetwork::new(vec![2,2]),
         trainer: trainer::Trainer::new(),
         score_curve : vec![]
     };
@@ -169,8 +173,8 @@ fn initialize_graphics() {
                 match k.button {
                     Button::Keyboard(Key::Space) => {
                         let mut rng = rand::thread_rng();
-                        app.trainer.net.set_inputs(vec![rng.gen_range(-1.0, 1.0), rng.gen_range(-1.0, 1.0)]);
-                        app.trainer.net.calculate_network();
+                        app.network.set_inputs(vec![rng.gen_range(-1.0, 1.0), rng.gen_range(-1.0, 1.0)]);
+                        app.network.calculate_network();
                     },
                     _ => (),
                 }

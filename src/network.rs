@@ -133,7 +133,7 @@ impl NeuralNetwork {
     }
 
     /// Get the structure of the network as a vector of usize, each usize representing a layer as its size
-    pub fn get_structure(&mut self) -> Vec<usize> {
+    pub fn get_structure(&self) -> Vec<usize> {
         let mut structure = vec![];
         for l in 0..self.nodes.len() {
             structure.push(self.nodes[l].len());
